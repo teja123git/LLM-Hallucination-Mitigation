@@ -1,0 +1,28 @@
+# Core
+groq>=0.12.0
+google-genai>=1.0.0
+
+# Embeddings & Retrieval
+sentence-transformers>=3.0.0
+faiss-cpu>=1.8.0
+rank_bm25>=0.2.2
+
+# Datasets
+datasets>=3.0.0
+
+# Evaluation
+bert-score>=0.3.13
+rouge-score>=0.1.2
+
+# Data & Visualization
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+seaborn>=0.13.0
+tqdm>=4.65.0
+
+# NLP utilities
+nltk>=3.8.0
+
+# Environment
+python-dotenv>=1.0.0
