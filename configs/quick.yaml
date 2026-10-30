@@ -1,0 +1,7 @@
+# Small run to validate your setup end-to-end (~minutes, < 100K tokens per stage).
+stage1: {n_per_dataset: 10}
+stage2:
+  halueval: {n_dev: 10, n_test: 15}
+  fever: {n: 15}
+  ragtruth: {n: 15, pos_frac: 0.4, tasks: [QA]}
+stage3: {n_per_dataset: 5, bootstrap: 200}

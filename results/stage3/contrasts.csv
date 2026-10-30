@@ -1,0 +1,25 @@
+scope,contrast,n,delta_correct,correct_lo,correct_hi,delta_incorrect,incorrect_lo,incorrect_hi,mcnemar_p,only_baseline_correct,only_system_correct,outcome
+all,Retrieval (B vs A),16,-0.125,-0.5,0.25,-0.4375,-0.75,-0.125,0.7265625,5,3,judge-free
+all,Self-consistency filter (C vs A),16,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+all,CoVe verification (D vs A),16,0.0,0.0,0.0,-0.0625,-0.1875,0.0,1.0,0,0,judge-free
+all,Evidence verification (E vs B),16,0.25,0.0625,0.4375,0.1875,0.0,0.375,0.125,0,4,judge-free
+all,"Correction, RARR (F vs E)",16,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+all,Hybrid detector (G vs F),16,-0.25,-0.4375,-0.0625,-0.1875,-0.375,0.0,0.125,4,0,judge-free
+all,Full pipeline vs RAG (F vs B),16,0.25,0.0625,0.4375,0.1875,0.0,0.375,0.125,0,4,judge-free
+all,Full pipeline vs plain LLM (F vs A),16,0.125,-0.1875,0.4375,-0.25,-0.5625,0.0,0.6875,2,4,judge-free
+halueval,Retrieval (B vs A),8,0.125,-0.375,0.625,-0.25,-0.6906249999999998,0.19062499999999716,1.0,2,3,judge-free
+halueval,Self-consistency filter (C vs A),8,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+halueval,CoVe verification (D vs A),8,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+halueval,Evidence verification (E vs B),8,0.125,0.0,0.375,0.0,0.0,0.0,1.0,0,1,judge-free
+halueval,"Correction, RARR (F vs E)",8,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+halueval,Hybrid detector (G vs F),8,-0.125,-0.375,0.0,-0.125,-0.375,0.0,1.0,1,0,judge-free
+halueval,Full pipeline vs RAG (F vs B),8,0.125,0.0,0.375,0.0,0.0,0.0,1.0,0,1,judge-free
+halueval,Full pipeline vs plain LLM (F vs A),8,0.25,-0.19062499999999982,0.6906249999999972,-0.25,-0.6906249999999998,0.19062499999999716,0.625,1,3,judge-free
+truthfulqa,Retrieval (B vs A),8,-0.375,-0.75,0.0,-0.625,-1.0,-0.25,0.25,3,0,judge-free
+truthfulqa,Self-consistency filter (C vs A),8,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+truthfulqa,CoVe verification (D vs A),8,0.0,0.0,0.0,-0.125,-0.375,0.0,1.0,0,0,judge-free
+truthfulqa,Evidence verification (E vs B),8,0.375,0.125,0.75,0.375,0.125,0.75,0.25,0,3,judge-free
+truthfulqa,"Correction, RARR (F vs E)",8,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0,0,judge-free
+truthfulqa,Hybrid detector (G vs F),8,-0.375,-0.75,-0.125,-0.25,-0.5,0.0,0.25,3,0,judge-free
+truthfulqa,Full pipeline vs RAG (F vs B),8,0.375,0.125,0.75,0.375,0.125,0.75,0.25,0,3,judge-free
+truthfulqa,Full pipeline vs plain LLM (F vs A),8,0.0,-0.375,0.375,-0.25,-0.5,0.0,1.0,1,1,judge-free

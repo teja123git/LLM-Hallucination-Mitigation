@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-10-30T20:46:38",
+  "mock": false,
+  "model": "openai/gpt-oss-120b",
+  "judge_model": "openai/gpt-oss-120b",
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "nli_model": "cross-encoder/nli-deberta-v3-base",
+  "seed": 42,
+  "n_halueval_dev": 40,
+  "n_halueval_test": 80,
+  "llm_stats": {
+    "claims": {
+      "calls": 13,
+      "cached_calls": 0,
+      "prompt_tokens": 5261,
+      "completion_tokens": 3136,
+      "llm_latency": 23.73926160042174,
+      "local_latency": 0.0,
+      "total_tokens": 8397,
+      "latency": 23.73926160042174
+    },
+    "llm_verify": {
+      "calls": 83,
+      "cached_calls": 4,
+      "prompt_tokens": 37939,
+      "completion_tokens": 7622,
+      "llm_latency": 433.9965290010441,
+      "local_latency": 0.0,
+      "total_tokens": 45561,
+      "latency": 433.9965290010441
+    }
+  }
+}

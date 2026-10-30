@@ -1,0 +1,7 @@
+dataset,mode,recall@1,recall@3,recall@5,recall@10,mrr,n
+halueval,bm25,1.0,1.0,1.0,1.0,1.0,8
+halueval,dense,0.875,0.875,0.875,0.875,0.875,8
+halueval,hybrid,0.875,0.875,0.875,1.0,0.8888888888888888,8
+truthfulqa,bm25,0.0,1.0,1.0,1.0,0.3333333333333333,1
+truthfulqa,dense,1.0,1.0,1.0,1.0,1.0,1
+truthfulqa,hybrid,1.0,1.0,1.0,1.0,1.0,1

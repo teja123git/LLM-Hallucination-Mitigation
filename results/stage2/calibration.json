@@ -1,0 +1,77 @@
+{
+  "heads": {
+    "nli": {
+      "name": "nli",
+      "features": [
+        "s_nli"
+      ],
+      "weights": [],
+      "bias": 0.0,
+      "kind": "mean",
+      "threshold": 0.981101
+    },
+    "llm": {
+      "name": "llm",
+      "features": [
+        "s_llm"
+      ],
+      "weights": [],
+      "bias": 0.0,
+      "kind": "mean",
+      "threshold": 0.5
+    },
+    "selfcheck": {
+      "name": "selfcheck",
+      "features": [
+        "s_sc"
+      ],
+      "weights": [],
+      "bias": 0.0,
+      "kind": "mean",
+      "threshold": 0.999982
+    },
+    "cove": {
+      "name": "cove",
+      "features": [
+        "s_cove"
+      ],
+      "weights": [],
+      "bias": 0.0,
+      "kind": "mean",
+      "threshold": 1.0
+    },
+    "evidence": {
+      "name": "evidence",
+      "features": [
+        "s_nli",
+        "s_llm"
+      ],
+      "weights": [
+        0.9253535271543742,
+        0.8532648677864922
+      ],
+      "bias": -0.8389831493318352,
+      "kind": "logreg",
+      "threshold": 0.625247
+    },
+    "hybrid": {
+      "name": "hybrid",
+      "features": [
+        "s_nli",
+        "s_llm",
+        "s_sc"
+      ],
+      "weights": [
+        0.9230240572676295,
+        0.8495302111479845,
+        -0.10486404856562659
+      ],
+      "bias": -0.7584040738525838,
+      "kind": "logreg",
+      "threshold": 0.393173
+    }
+  },
+  "nli_entail_threshold": 0.018899,
+  "nli_contra_threshold": 0.5,
+  "calibrated": true
+}

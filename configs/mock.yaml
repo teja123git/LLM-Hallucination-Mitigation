@@ -1,0 +1,11 @@
+# OFFLINE SMOKE TEST. Uses fake LLM / NLI / embedder and tiny toy data. Numbers are meaningless.
+project: {mock: true, results_dir: results_mock, data_dir: data}
+llm: {rpm: 100000, tpm: 100000000, workers: 1, cache: false}
+kb: {tqa_wikipedia: false}
+stage1: {n_per_dataset: 12}
+stage2:
+  halueval: {n_dev: 12, n_test: 12}
+  fever: {n: 12}
+  ragtruth: {n: 10, pos_frac: 0.4, tasks: [QA]}
+stage3: {n_per_dataset: 6, bootstrap: 100}
+eval: {bertscore_rescale: false}

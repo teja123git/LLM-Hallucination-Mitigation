@@ -1,0 +1,9 @@
+# Sized for the Groq FREE tier (gpt-oss: 1,000 requests/day and 200K tokens/day per model).
+# `python scripts/run_all.py --config configs/free_tier.yaml --budget-only` prints the estimate. Runs resume from the cache.
+# Smaller samples => wider confidence intervals: report them, and prefer large effects over small differences.
+stage1: {n_per_dataset: 40}
+stage2:
+  halueval: {n_dev: 25, n_test: 50}
+  fever: {n: 45}
+  ragtruth: {n: 45, pos_frac: 0.33, tasks: [QA]}
+stage3: {n_per_dataset: 25, bootstrap: 500}

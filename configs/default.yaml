@@ -1,0 +1,87 @@
+# ---------------------------------------------------------------------------
+# Default configuration. Override with:  --config configs/quick.yaml
+# or on the command line:               --set llm.model=openai/gpt-oss-120b
+# ---------------------------------------------------------------------------
+project:
+  seed: 42
+  data_dir: data
+  results_dir: results
+  mock: false              # true => offline smoke-test mode (fake LLM / NLI / embedder). NEVER use for reported numbers.
+
+llm:
+  provider: groq
+  model: openai/gpt-oss-20b            # generator + claim extractor + verifier (reasoning model; llama-3.1-8b-instant was retired 2026-08-16)
+  judge_model: openai/gpt-oss-120b     # independent, stronger grader (llama-3.3-70b-versatile was retired 2026-08-16)
+  reasoning_effort: low                # gpt-oss always reasons; low = cheapest (low | medium | high)
+  reasoning_headroom: 600              # extra completion tokens for hidden reasoning (they count against max_tokens)
+  temperature: 0.3                     # baselines (Stage 1 report)
+  sample_temperature: 0.7              # SelfCheckGPT-style stochastic samples
+  max_tokens: 256
+  # Groq free tier (checked Oct 2026) for gpt-oss-20b / gpt-oss-120b, per model: 30 RPM, 1,000 requests/DAY, 8K TPM, 200K tokens/DAY.
+  # Keep a margin below the limits. On a paid/dev tier raise them (e.g. rpm: 500, tpm: 200000) and set workers: 8.
+  rpm: 28
+  tpm: 7000
+  limits: {}                           # optional per-model overrides, e.g. {openai/gpt-oss-120b: {rpm: 28, tpm: 7000}}
+  max_retries: 6
+  timeout: 60
+  workers: 1                           # questions processed in parallel (rate limiter is shared)
+  cache: true                          # persistent response cache => runs are resumable and re-runs are free
+
+retrieval:
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  chunk_size: 256          # words
+  chunk_overlap: 50        # words
+  top_k: 5                 # passages given to the RAG generator (Baseline B)
+  evidence_k: 3            # passages retrieved per claim for verification
+  rrf_k: 60                # Reciprocal Rank Fusion constant
+  candidates: 50           # candidates taken from each stream before fusion
+  mode: hybrid             # hybrid | dense | bm25
+  claim_query: claim       # claim | question+claim
+
+kb:
+  halueval_pool: true      # pool ALL HaluEval-QA knowledge passages as corpus (gold passage is hidden among ~10k distractors)
+  tqa_wikipedia: true      # fetch Wikipedia pages cited by TruthfulQA (needs internet on first run; cached afterwards)
+  wikipedia_max_words: 1500
+  wikipedia_user_agent: "halluguard-course-project/1.0 (academic research)"
+
+nli:
+  model: cross-encoder/nli-deberta-v3-base
+  batch_size: 16
+  max_length: 512
+  window_words: 180        # long evidence is split into windows; claim score = max over windows
+  window_overlap: 30
+
+claims:
+  max_claims: 5
+
+selfcheck:
+  n_samples: 5
+
+pipeline:
+  rag_fallback_to_parametric: true   # if RAG abstains, verify/correct the parametric answer against retrieved evidence
+  evidence_words: 120                # truncate each evidence passage inside LLM prompts (token budget)
+  correction_accept_entail: 0.5      # a rewritten claim is kept only if NLI(entail) vs its cited evidence >= this
+  abstain_text: "I could not find enough reliable evidence to answer this question."
+
+stage1:
+  n_per_dataset: 100
+
+stage2:
+  halueval: {n_dev: 40, n_test: 80}   # questions; each yields 2 labelled answers (right / hallucinated)
+  fever: {n: 90}                      # balanced over SUPPORTS / REFUTES / NOT ENOUGH INFO
+  ragtruth: {n: 90, pos_frac: 0.33, tasks: [QA]}
+  detectors: [nli, llm, selfcheck, cove, evidence, hybrid]
+  selfcheck_ragtruth: false            # extra LLM sampling on RAGTruth prompts (expensive)
+  aggregate: max                       # claim -> answer score: max | mean
+  calibration: youden                  # threshold criterion on the dev split: youden (prevalence-invariant) | f1
+  n_samples_curve: [1, 2, 3, 4, 5]     # SelfCheck sample-count ablation (free: re-uses the cached samples)
+
+stage3:
+  n_per_dataset: 40
+  systems: [A, B, C, D, E, F, G, F_cove]
+  use_llm_judge: true
+  bootstrap: 1000
+
+eval:
+  bertscore_model: null         # null => bert-score default for lang=en (roberta-large)
+  bertscore_rescale: true

@@ -1,0 +1,14 @@
+# EMERGENCY profile: finish everything within ONE fresh model quota (gpt-oss-120b: 200K tokens / 1,000 requests per day).
+# HaluEval detection features are re-used from the cached gpt-oss-20b run (no LLM calls); RAGTruth / FEVER / Stage 3 use gpt-oss-120b.
+# No LLM judge (judge-free metrics + paired statistics only). Tiny samples -> very wide confidence intervals: say so in the report.
+llm: {model: openai/gpt-oss-120b}
+stage1: {n_per_dataset: 8}          # = stage3 size, so Stage 1 re-uses Stage 3's cached A/B answers (run Stage 3 first)
+stage2:
+  reuse_halueval: true
+  fever: {n: 12}
+  ragtruth: {n: 15, pos_frac: 0.4, tasks: [QA]}
+stage3:
+  n_per_dataset: 8
+  systems: [A, B, C, D, E, F, G]    # the proposal's six + the hybrid; F-CoVe dropped to save quota
+  use_llm_judge: false
+  bootstrap: 500

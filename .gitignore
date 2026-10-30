@@ -1,32 +1,30 @@
-# Data (auto-downloaded by notebooks)
-data/
-*.jsonl
-
-# Python
+# secrets
+.env
+# downloaded data / caches (data/toy is tracked - it is the offline smoke-test data)
+data/raw/
+data/cache/
+data/kb/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.part
+# mock-mode runs must never be committed as results
+results_mock/
+# python / jupyter / IDE / OS
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.egg-info/
 .eggs/
-
-# Environment
-.env
+.ipynb_checkpoints/
+.pytest_cache/
 .venv/
 venv/
 env/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# IDE
 .vscode/
 .idea/
-
-# OS
 .DS_Store
 Thumbs.db
-
-# Large model files
+# large model files
 *.bin
 *.pt
 *.safetensors

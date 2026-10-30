@@ -1,0 +1,122 @@
+{
+  "timestamp": "2026-10-30T20:15:16",
+  "mock": false,
+  "model": "openai/gpt-oss-120b",
+  "judge_model": "openai/gpt-oss-120b",
+  "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "nli_model": "cross-encoder/nli-deberta-v3-base",
+  "seed": 42,
+  "n_per_dataset": 8,
+  "systems": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G"
+  ],
+  "n_questions": 16,
+  "n_failed": 0,
+  "judge_failed": 0,
+  "judged": false,
+  "judge_equals_generator": true,
+  "calibrated": true,
+  "rag_fallback_rate": {
+    "E": 0.5625,
+    "F": 0.5625,
+    "G": 0.5625
+  },
+  "llm_stats": {
+    "direct": {
+      "calls": 16,
+      "cached_calls": 0,
+      "prompt_tokens": 1793,
+      "completion_tokens": 1504,
+      "llm_latency": 11.135815299814567,
+      "local_latency": 0.0,
+      "total_tokens": 3297,
+      "latency": 11.135815299814567
+    },
+    "claims": {
+      "calls": 23,
+      "cached_calls": 2,
+      "prompt_tokens": 7316,
+      "completion_tokens": 2509,
+      "llm_latency": 47.221225700341165,
+      "local_latency": 0.0,
+      "total_tokens": 9825,
+      "latency": 47.221225700341165
+    },
+    "rag": {
+      "calls": 16,
+      "cached_calls": 0,
+      "prompt_tokens": 11671,
+      "completion_tokens": 768,
+      "llm_latency": 163.18622560007498,
+      "local_latency": 0.0,
+      "total_tokens": 12439,
+      "latency": 163.18622560007498
+    },
+    "samples": {
+      "calls": 80,
+      "cached_calls": 0,
+      "prompt_tokens": 8965,
+      "completion_tokens": 7745,
+      "llm_latency": 154.64737599971704,
+      "local_latency": 0.0,
+      "total_tokens": 16710,
+      "latency": 154.64737599971704
+    },
+    "cove_plan": {
+      "calls": 16,
+      "cached_calls": 0,
+      "prompt_tokens": 3729,
+      "completion_tokens": 1966,
+      "llm_latency": 13.70281619974412,
+      "local_latency": 0.0,
+      "total_tokens": 5695,
+      "latency": 13.70281619974412
+    },
+    "cove_answer": {
+      "calls": 16,
+      "cached_calls": 0,
+      "prompt_tokens": 3043,
+      "completion_tokens": 1995,
+      "llm_latency": 16.70910910051316,
+      "local_latency": 0.0,
+      "total_tokens": 5038,
+      "latency": 16.70910910051316
+    },
+    "cove_judge": {
+      "calls": 16,
+      "cached_calls": 0,
+      "prompt_tokens": 5176,
+      "completion_tokens": 1637,
+      "llm_latency": 44.53083219984546,
+      "local_latency": 0.0,
+      "total_tokens": 6813,
+      "latency": 44.53083219984546
+    },
+    "llm_verify": {
+      "calls": 29,
+      "cached_calls": 0,
+      "prompt_tokens": 15653,
+      "completion_tokens": 2719,
+      "llm_latency": 230.03908260026947,
+      "local_latency": 0.0,
+      "total_tokens": 18372,
+      "latency": 230.03908260026947
+    },
+    "revise": {
+      "calls": 16,
+      "cached_calls": 2,
+      "prompt_tokens": 14161,
+      "completion_tokens": 1952,
+      "llm_latency": 237.46995340054855,
+      "local_latency": 0.0,
+      "total_tokens": 16113,
+      "latency": 237.46995340054855
+    }
+  }
+}
