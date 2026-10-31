@@ -1,96 +1,591 @@
 # LLM-Hallucination-Mitigation
 
-**Improving factuality of LLMs through Retrieval-Augmented Generation, claim-level verification and evidence-guided correction** (DA624 - NLP with LLMs).
+**Improving Factuality of LLMs through Retrieval-Augmented Generation, Claim-Level Verification and Evidence-Guided Correction**
 
-Question: *how much do hallucination detection and self-verification improve factuality over a plain LLM and a standard RAG system, and what do they cost in latency and tokens?*
-A controlled, paired ablation of eight systems answers it (which component helps, by how much, at what price).
+**Course:** DA624 – NLP with LLMs
 
+---
+
+## Project Overview
+
+Large Language Models (LLMs) can generate fluent and convincing responses that contain incorrect, unsupported, or fabricated information. This problem, commonly known as hallucination, limits their reliability in applications where factual accuracy is important.
+
+This project investigates how Retrieval-Augmented Generation (RAG), claim-level hallucination detection, self-verification, and evidence-guided correction can improve the factuality of LLM-generated answers.
+
+**Research Question:**
+
+*How much do hallucination detection and self-verification improve factuality over a plain LLM and a standard RAG system, and what are the associated costs in latency and tokens?*
+
+We conduct a controlled, paired ablation study of eight system configurations to investigate which components improve factuality, by how much, and at what computational cost.
+
+## Methodology
+
+The proposed system follows a multi-stage pipeline:
+
+```text
+Question
+   |
+   v
+[1. Initial Answer Generation]
+   |
+   v
+[2. Atomic Claim Extraction]
+   |
+   v
+[3. Hallucination Detection]
+   |  NLI | LLM Verifier | SelfCheck | CoVe | Hybrid
+   |
+   v
+[4. Evidence Retrieval]
+   |  BM25 + Dense Retrieval + Reciprocal Rank Fusion
+   |
+   v
+[5. Evidence-Guided Correction]
+   |  KEEP / REWRITE / REMOVE
+   |  Verify rewritten claims before acceptance
+   |
+   v
+[6. Final Answer with Supporting Citations]
 ```
-question -> [1 generate] -> [2 atomic claims] -> [3 detect: NLI | LLM verifier | SelfCheck | CoVe | hybrid]
-                                                     |  flagged claims
-                                    [4 retrieve evidence per claim (BM25 + dense + RRF)]
-                                                     v
-                              [5 correct: remove / RARR-style rewrite, verify-then-accept] -> [6 answer with [n] citations]
-```
 
-| system | A | B | C | D | E | F | G | F-CoVe |
-|---|---|---|---|---|---|---|---|---|
-| | LLM only | +RAG | +self-consistency | +CoVe verification | +RAG +verification | E + correction (RARR) | F with hybrid detector | E + CoVe correction |
+The system combines retrieval, claim-level verification, and evidence-guided correction to reduce unsupported or incorrect statements in generated responses.
 
-## Quick start
+## System Configurations
+
+The project evaluates eight system configurations:
+
+| System | Configuration | Description |
+|---|---|---|
+| A | LLM Only | Direct response from the language model |
+| B | Standard RAG | LLM with retrieved context |
+| C | Self-Consistency | LLM with self-consistency-based verification |
+| D | CoVe Verification | LLM with Chain-of-Verification |
+| E | RAG + Verification | Retrieval combined with claim-level verification |
+| F | RAG + Correction | System E with evidence-guided correction using a RARR-style approach |
+| G | Hybrid Detection | System F with a hybrid hallucination detector |
+| F-CoVe | CoVe Correction | System E with CoVe-based correction |
+
+These configurations allow comparisons between a plain LLM, standard RAG, verification-based approaches, and correction-based approaches.
+
+## Quick Start
+
+### 1. Clone the Repository
+
 ```bash
-git clone https://github.com/teja123git/LLM-Hallucination-Mitigation.git && cd LLM-Hallucination-Mitigation
-python -m venv .venv && source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt && pip install -e .         # (pip install -e . is optional; scripts/notebooks work without it)
-cp .env.example .env                                        # then put your free key from https://console.groq.com in .env
-python scripts/check_setup.py                               # API key, models, datasets, token budget - run this first
-python scripts/run_all.py --config configs/quick.yaml       # small end-to-end run (validate your setup)
-python scripts/run_all.py                                   # full run (see "Budget" - resumable over several days on a free key)
-```
-Outputs land in `results/stage1|2|3/` and a consolidated `results/REPORT.md`. Or use the notebooks `01_`, `02_`, `03_` (same code, narrated). Google Colab: clone, `pip install -r requirements.txt`, add `GROQ_API_KEY` to the environment, open a notebook.
-
-**Offline smoke test (no key, no internet, fake models, toy data):** `python scripts/run_all.py --mock` -> writes to `results_mock/`; every figure is watermarked **MOCK DATA**. It checks that the code works; its numbers mean nothing and must never be reported.
-
-## Project structure
-```
-01_baselines_and_retrieval.ipynb   Stage 1: data, KB, retrieval metrics, Baselines A/B
-02_hallucination_detection.ipynb   Stage 2: claims, detectors, benchmarks (HaluEval/RAGTruth/FEVER), calibration, ablations
-03_correction_and_ablation.ipynb   Stage 3: correction, 8-system ablation, judge, statistics, cost, examples
-app.py                             Streamlit demo: initial vs. verified/corrected answer, claim table, evidence, cost
-src/halluguard/                    llm.py (cache, limiter) retrieval.py kb.py data.py claims.py nli.py detection.py correction.py
-                                   pipeline.py (systems A-G) judge.py evaluation.py metrics.py plotting.py budget.py report.py
-                                   experiments/{stage1,stage2,stage3,common}.py
-scripts/                           run_stage1|2|3.py run_all.py check_setup.py prepare_data.py make_toy_data.py dev/build_notebooks.py
-configs/                           default.yaml  quick.yaml  mock.yaml
-tests/                             45 tests (pytest) - infrastructure, retrieval/KB leakage, metrics, pipeline semantics, e2e mock run
-docs/                              DATA.md  METHODS.md  CHANGES_FROM_STAGE1.md  course/ (proposal + Stage 1 report)
-data/toy/                          tiny offline datasets for --mock/tests      results/   generated outputs
+git clone https://github.com/teja123git/LLM-Hallucination-Mitigation.git
+cd LLM-Hallucination-Mitigation
 ```
 
-## Running pieces
+### 2. Create a Virtual Environment
+
+**Windows:**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+**Linux / macOS:**
+
 ```bash
-python scripts/run_stage1.py [--n 100]                        # baselines + retrieval evaluation
-python scripts/run_stage2.py [--n-dev 40 --n-test 80 --skip-fever --skip-ragtruth]
-python scripts/run_stage3.py [--n 40] [--systems A,B,E,F] [--no-judge]
-python scripts/run_all.py --budget-only                       # print the rough token budget and exit
-streamlit run app.py                                          # interactive demo (HALLUGUARD_MOCK=1 for an offline UI preview)
-python -m pytest                                              # tests (no network or models needed)
+python -m venv .venv
+source .venv/bin/activate
 ```
-Override any setting: `--set llm.model=llama-3.3-70b-versatile --set retrieval.top_k=3`. All knobs are in `configs/default.yaml`.
-Run Stage 2 before Stage 3: it writes `results/stage2/calibration.json` (detector thresholds / hybrid weights); Stage 3 warns if it is missing.
 
-## Budget on a free Groq key (rough estimates at default sizes - `run_all.py --budget-only` prints yours)
-| stage | generator tokens | ~days at 500K tokens/day | notes |
-|---|---|---|---|
-| 1 | ~0.2M | 0.4 | 100 questions per dataset |
-| 2 | ~0.9M | ~2 | HaluEval 40 dev + 80 test questions, 90 FEVER, 90 RAGTruth |
-| 3 | ~0.5M + judge ~0.35M | ~1 + ~3.5 | 40 questions per dataset; the 70B judge has only 100K tokens/day |
+### 3. Install Dependencies
 
-Every finished LLM call is cached (`data/cache/llm_cache.sqlite`), so stopping, hitting the daily quota (the script exits with code 3 and a message) or re-running costs nothing - it resumes. `configs/quick.yaml` needs roughly a day's quota in total.
-**Judge options:** (a) default - independent 70B judge, slowest on free tier; (b) `--no-judge` - judge-free metrics only; (c) `--set llm.judge_model=llama-3.1-8b-instant` - fast but self-judging (recorded as `judge_equals_generator` in `meta.json`; mention it when reporting); (d) a paid Groq tier (a few cents for the whole project). Limits change - check your console; adjust `llm.rpm/tpm/limits` in the config.
+```bash
+pip install -r requirements.txt
+pip install -e .
+```
 
-## What you get
-* **Stage 1** - retrieval Recall@k/MRR (bm25 vs. dense vs. hybrid), context coverage, A/B quality (EM/F1/contains, BERTScore, ROUGE-L), abstention, tokens (prompt/completion), calls, latency.
-* **Stage 2** - Accuracy/Precision/Recall/F1/AUROC/AUPRC for 6 detectors on HaluEval test, RAGTruth, FEVER (+ 3-way confusion); gold-vs-retrieved evidence; bm25/dense/hybrid vs. detection; SelfCheck sample-count curve; ROC/PR curves; error analysis (`error_analysis.md`).
-* **Stage 3** - judge grades, hallucination (`incorrect`) rate, abstention-aware F-score, FActScore-style claim precision, citation precision, **paired contrasts** (one component at a time, bootstrap CI + McNemar), cost by stage group, factuality-vs-cost Pareto plots, qualitative before/after examples including failures.
+Installing the package in editable mode is optional.
 
-Map to the proposal: objectives 1-6 and deliverables (pipeline, >=4 system variants, tables/plots, ablation + error analysis, interactive demo) are implemented; "a small manually checked subset" is *not* automated - audit ~30 judge decisions by hand from `results/stage3/judgments.json` / `examples.md` before quoting claim-level numbers.
+### 4. Configure the API Key
 
-## Important design notes (details: docs/)
-* **Leak-free knowledge base** - only source documents (HaluEval paragraphs, Wikipedia pages cited by TruthfulQA); never answer lists. It is an oracle-in-pool setting (gold doc hidden among ~10k distractors) - easier than open-web RAG.
-* **No fabricated answers** - API failures raise; items are skipped and counted (`n_failed` in `meta.json`).
-* **Abstention-aware grading** - a system cannot look good by refusing everything.
-* **Paired design + shared stages** - all systems answer identical questions; costs are still attributed per system.
-* Prompts: `src/halluguard/prompts.py`. Models: generator `llama-3.1-8b-instant`, judge `llama-3.3-70b-versatile`, embedder `all-MiniLM-L6-v2`, NLI `cross-encoder/nli-deberta-v3-base` (all configurable; Groq model availability changes over time).
+Create a `.env` file using `.env.example`.
 
-## Troubleshooting
-* `GROQ_API_KEY is not set` -> `.env` (see `.env.example`). `Daily quota reached` -> re-run later (progress is cached), use `--no-judge`, or a paid tier.
-* DeBERTa tokenizer error -> `pip install sentencepiece protobuf tiktoken`. First run downloads ~2 GB of models (MiniLM, DeBERTa NLI, roberta-large for BERTScore; BERTScore is skipped with a warning if unavailable).
-* FEVER "unavailable"/"cannot parse" -> `python scripts/prepare_data.py --check`; or `--skip-fever`.
-* Behind a firewall: Wikipedia needs internet once (`kb.tqa_wikipedia: false` disables it; see docs/DATA.md).
-* Very first Stage-1 run embeds ~10k passages (a few minutes on CPU); embeddings are cached in `data/kb/`.
+**Windows:**
 
-## Status / honesty notes
-The pipeline and all scripts were exercised end-to-end **offline with fake models** (tests, notebooks, CLI, demo). Components that need the real services - the live Groq client, MiniLM/DeBERTa/BERTScore, Wikipedia fetching and the FEVER loader - were written to documented APIs but could not be run where this was developed; `scripts/check_setup.py` exercises each of them on your machine. **No real experimental results are included**; `results/` is empty until you run the stages.
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
 
-Academic research project (DA624). Authors: Vamaxi Maheshwari, Venkat Sai Teja Kalluri, Chodabattula Moni Praneeth.
+**Linux / macOS:**
+
+```bash
+cp .env.example .env
+```
+
+Add your Groq API key:
+
+```text
+GROQ_API_KEY=your_groq_api_key
+```
+
+Get a free API key from:
+
+https://console.groq.com/keys
+
+Do not upload your `.env` file or expose your API key publicly.
+
+### 5. Check the Setup
+
+```bash
+python scripts/check_setup.py
+```
+
+This checks the API key, models, datasets, and approximate token budget.
+
+### 6. Run a Quick Experiment
+
+```bash
+python scripts/run_all.py --config configs/quick.yaml
+```
+
+### 7. Run the Complete Experiment
+
+```bash
+python scripts/run_all.py
+```
+
+The complete experiment may take several days depending on API limits and model usage. Completed LLM calls are cached, allowing experiments to resume without repeating previous calls.
+
+## Project Structure
+
+```text
+LLM-Hallucination-Mitigation/
+│
+├── 01_baselines_and_retrieval.ipynb
+├── 02_hallucination_detection.ipynb
+├── 03_correction_and_ablation.ipynb
+│
+├── app.py
+│
+├── src/
+│   └── halluguard/
+│       ├── llm.py
+│       ├── retrieval.py
+│       ├── kb.py
+│       ├── data.py
+│       ├── claims.py
+│       ├── nli.py
+│       ├── detection.py
+│       ├── correction.py
+│       ├── pipeline.py
+│       ├── judge.py
+│       ├── evaluation.py
+│       ├── metrics.py
+│       ├── plotting.py
+│       ├── budget.py
+│       ├── report.py
+│       └── experiments/
+│           ├── stage1.py
+│           ├── stage2.py
+│           ├── stage3.py
+│           └── common.py
+│
+├── scripts/
+│   ├── run_stage1.py
+│   ├── run_stage2.py
+│   ├── run_stage3.py
+│   ├── run_all.py
+│   ├── check_setup.py
+│   ├── prepare_data.py
+│   ├── make_toy_data.py
+│   └── dev/
+│       └── build_notebooks.py
+│
+├── configs/
+│   ├── default.yaml
+│   ├── quick.yaml
+│   └── mock.yaml
+│
+├── tests/
+│
+├── docs/
+│   ├── DATA.md
+│   ├── METHODS.md
+│   ├── CHANGES_FROM_STAGE1.md
+│   └── course/
+│
+├── data/
+│   └── toy/
+│
+├── results/
+│
+├── requirements.txt
+├── .env.example
+└── README.md
+```
+
+## Running Individual Stages
+
+The project is organized into three main stages, with a separate Jupyter notebook for each stage.
+
+### Stage 1: Baselines and Retrieval
+
+**Notebook:** `01_baselines_and_retrieval.ipynb`
+
+This stage prepares the datasets and knowledge base, evaluates retrieval performance, and establishes the baseline results for systems A and B.
+
+Run:
+
+```bash
+python scripts/run_stage1.py --n 100
+```
+
+Evaluation includes:
+
+- BM25, dense, and hybrid retrieval.
+- Recall@k and Mean Reciprocal Rank (MRR).
+- Context coverage.
+- Exact Match and F1.
+- BERTScore and ROUGE-L.
+- Abstention.
+- Prompt and completion tokens.
+- API calls and latency.
+
+### Stage 2: Hallucination Detection
+
+**Notebook:** `02_hallucination_detection.ipynb`
+
+This stage extracts atomic claims and evaluates hallucination detection methods using HaluEval, RAGTruth, and FEVER.
+
+Run:
+
+```bash
+python scripts/run_stage2.py --n-dev 40 --n-test 80
+```
+
+Optional dataset exclusions:
+
+```bash
+python scripts/run_stage2.py --skip-fever --skip-ragtruth
+```
+
+Evaluation includes:
+
+- Accuracy.
+- Precision.
+- Recall.
+- F1-score.
+- AUROC and AUPRC.
+- Three-way confusion analysis.
+- Gold versus retrieved evidence.
+- BM25, dense, and hybrid retrieval comparisons.
+- Self-consistency sample-count analysis.
+- ROC and Precision-Recall curves.
+- Detector error analysis.
+
+### Stage 3: Correction and Ablation
+
+**Notebook:** `03_correction_and_ablation.ipynb`
+
+This stage evaluates evidence-guided correction and compares the different system configurations.
+
+Run:
+
+```bash
+python scripts/run_stage3.py --n 40
+```
+
+To run selected systems:
+
+```bash
+python scripts/run_stage3.py --systems A,B,E,F
+```
+
+To disable the independent LLM judge:
+
+```bash
+python scripts/run_stage3.py --no-judge
+```
+
+Evaluation includes:
+
+- Judge-based answer evaluation.
+- Hallucination and incorrect-claim rates.
+- Abstention-aware F-score.
+- FActScore-style claim precision.
+- Citation precision.
+- Paired system comparisons.
+- Bootstrap confidence intervals.
+- McNemar's test.
+- Token usage and latency analysis.
+- Factuality-versus-cost comparisons.
+- Before-and-after correction examples.
+
+**Important:** Run Stage 2 before Stage 3. Stage 2 generates `results/stage2/calibration.json`, which contains detector calibration information used by Stage 3.
+
+## Running the Complete Pipeline
+
+For a smaller validation run:
+
+```bash
+python scripts/run_all.py --config configs/quick.yaml
+```
+
+For the complete experiment:
+
+```bash
+python scripts/run_all.py
+```
+
+To run individual stages, use:
+
+```bash
+python scripts/run_stage1.py
+python scripts/run_stage2.py
+python scripts/run_stage3.py
+```
+
+## Offline Smoke Test
+
+The project includes a mock mode for testing the software pipeline without an API key, internet access, or actual language model calls.
+
+Run:
+
+```bash
+python scripts/run_all.py --mock
+```
+
+Mock outputs are saved in:
+
+```text
+results_mock/
+```
+
+Mock mode uses toy datasets and simulated model responses. It is intended only for testing software functionality.
+
+**Important:** Mock results must never be presented as actual experimental results. All mock-generated figures and outputs are marked as MOCK DATA.
+
+An offline preview of the Streamlit interface can also be launched using:
+
+```bash
+HALLUGUARD_MOCK=1 streamlit run app.py
+```
+
+## Streamlit Application
+
+The project includes a Streamlit application for demonstrating the hallucination mitigation pipeline.
+
+Run:
+
+```bash
+streamlit run app.py
+```
+
+The application demonstrates:
+
+- Initial LLM-generated answers.
+- Claim extraction.
+- Claim-level verification.
+- Retrieved supporting evidence.
+- Unsupported claim identification.
+- Evidence-guided correction.
+- Final verified answers with citations.
+- Token and cost information.
+
+## Evaluation Metrics
+
+The project uses multiple metrics to evaluate retrieval quality, hallucination detection, answer factuality, and computational cost.
+
+| Evaluation Area | Metrics |
+|---|---|
+| Retrieval | Recall@k, MRR, context coverage |
+| Answer Quality | Exact Match, F1, ROUGE-L, BERTScore |
+| Hallucination Detection | Accuracy, Precision, Recall, F1, AUROC, AUPRC |
+| Claim-Level Evaluation | FActScore-style claim precision, incorrect-claim rate |
+| Citation Evaluation | Citation precision |
+| Abstention | Abstention-aware F-score |
+| Computational Cost | Prompt tokens, completion tokens, API calls, latency |
+| Statistical Analysis | Bootstrap confidence intervals, McNemar's test |
+
+The evaluation compares both factuality improvements and the additional computational cost introduced by verification and correction.
+
+## Datasets
+
+The project uses the following datasets and knowledge sources:
+
+- **HaluEval:** Used for hallucination detection evaluation.
+- **RAGTruth:** Used for evaluating hallucinations in retrieval-augmented responses.
+- **FEVER:** Used for claim verification against evidence.
+- **TruthfulQA:** Used for evaluating factual question answering and retrieval.
+
+The knowledge base is constructed using source documents rather than answer lists. For TruthfulQA, Wikipedia pages cited by the dataset are used as source material.
+
+The experimental setup follows an oracle-in-pool retrieval setting, where relevant gold documents are included among a larger collection of distractor documents. This makes retrieval evaluation controlled but easier than unrestricted open-web retrieval.
+
+For additional information, refer to:
+
+- `docs/DATA.md`
+- `docs/METHODS.md`
+
+## Budget and API Usage
+
+The experiments use Groq API calls for language generation and verification. Token consumption depends on the selected configuration, dataset sizes, and judge settings.
+
+Approximate generator-token requirements at the default experiment sizes:
+
+| Stage | Estimated Generator Tokens | Approximate Duration at 500K Tokens/Day |
+|---|---:|---:|
+| Stage 1 | 0.2M | 0.4 days |
+| Stage 2 | 0.9M | Approximately 2 days |
+| Stage 3 | 0.5M + approximately 0.35M for judging | Approximately 1 day + 3.5 days for judging |
+
+These are rough estimates and may change with API limits, model selection, and experiment configuration.
+
+To view the estimated token budget:
+
+```bash
+python scripts/run_all.py --budget-only
+```
+
+### Judge Options
+
+Three configurations are supported:
+
+1. **Independent judge:** Uses the configured 70B judge model. This is the default configuration.
+2. **Judge-free evaluation:** Run with `--no-judge`.
+3. **Faster self-judging configuration:** Change the judge model to `llama-3.1-8b-instant`.
+
+When the generator and judge use the same model, the experiment metadata records `judge_equals_generator`. This distinction should be mentioned when reporting the results.
+
+### Caching and Resuming
+
+Completed LLM calls are cached in:
+
+```text
+data/cache/llm_cache.sqlite
+```
+
+This allows experiments to resume without repeating completed API calls.
+
+If the daily API quota is reached, the script exits with a message. The experiment can be continued later using the same configuration.
+
+API limits and model availability may change. Check your Groq console and adjust the relevant settings in `configs/default.yaml` when required.
+
+## Configuration
+
+Experiment parameters can be modified through:
+
+```text
+configs/default.yaml
+configs/quick.yaml
+configs/mock.yaml
+```
+
+For example, to change the language model or retrieval configuration:
+
+```bash
+python scripts/run_all.py \
+  --set llm.model=llama-3.3-70b-versatile \
+  --set retrieval.top_k=3
+```
+
+The configuration files contain settings for model selection, retrieval, detector thresholds, token limits, API usage, and experiment parameters.
+
+## Testing
+
+The project includes an automated pytest suite covering:
+
+- Infrastructure and configuration.
+- Retrieval and knowledge-base functionality.
+- Knowledge-base leakage checks.
+- Evaluation metrics.
+- Pipeline semantics.
+- End-to-end mock execution.
+
+Run the tests using:
+
+```bash
+python -m pytest
+```
+
+The tests are designed to run without external API calls or language models.
+
+## Experimental Limitations
+
+The following limitations should be considered when interpreting the results:
+
+1. **Oracle-in-pool retrieval:** Relevant documents are included in the knowledge base, making retrieval easier than unrestricted open-web retrieval.
+2. **Limited evaluation size:** Some experiments use relatively small subsets of the available datasets.
+3. **Model dependency:** Results may vary depending on the generator, verifier, and judge models.
+4. **API limitations:** Free-tier token limits and rate limits can affect experiment execution.
+5. **Judge reliability:** LLM-based evaluation may introduce its own biases and errors.
+6. **Manual validation:** A small manually checked subset is not automated. Approximately 30 judge decisions should be manually audited using `results/stage3/judgments.json` and `examples.md` before reporting claim-level conclusions.
+7. **Dataset coverage:** TruthfulQA retrieval uses a subset of the available Wikipedia source pages.
+
+These limitations are important when generalizing the results beyond the experimental setup.
+
+## Output Files
+
+Generated experiment results are stored under:
+
+```text
+results/
+├── stage1/
+├── stage2/
+├── stage3/
+└── REPORT.md
+```
+
+The outputs include:
+
+- Retrieval evaluation results.
+- Detector performance metrics.
+- Calibration information.
+- System comparison results.
+- Statistical analysis.
+- Token and latency measurements.
+- Generated plots.
+- Qualitative examples.
+- Consolidated experiment report.
+
+The exact files generated depend on the experiment configuration and the stages completed.
+
+## Reproducibility
+
+To reproduce the experiments:
+
+1. Clone the repository.
+2. Install the required dependencies.
+3. Configure the Groq API key.
+4. Run `scripts/check_setup.py`.
+5. Execute Stage 1 to prepare the knowledge base and evaluate baselines.
+6. Execute Stage 2 to calibrate and evaluate the detectors.
+7. Execute Stage 3 to evaluate correction and system ablations.
+8. Inspect the generated outputs in the `results/` directory.
+
+The notebooks provide a narrated version of the experimental stages, while the Python scripts support reproducible execution from the command line.
+
+For a quick validation:
+
+```bash
+python scripts/run_all.py --config configs/quick.yaml
+```
+
+For the complete experiment:
+
+```bash
+python scripts/run_all.py
+```
+
+## Documentation
+
+Additional project documentation is available in the `docs/` directory:
+
+- `docs/DATA.md` – Dataset preparation and knowledge-base construction.
+- `docs/METHODS.md` – Methodology and experimental details.
+- `docs/CHANGES_FROM_STAGE1.md` – Changes made after the initial project stage.
+- `docs/course/` – Initial project proposal and Stage 1 report.
+
+---
+
+**Course Project:** DA624 – NLP with LLMs
+
+**Project:** LLM Hallucination Mitigation
+
+**Repository:** [LLM-Hallucination-Mitigation](https://github.com/teja123git/LLM-Hallucination-Mitigation)
