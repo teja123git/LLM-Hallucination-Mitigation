@@ -451,7 +451,7 @@ Three configurations are supported:
 2. **Judge-free evaluation:** Run with `--no-judge`.
 3. **Faster self-judging configuration:** Change the judge model to `llama-3.1-8b-instant`.
 
-When the generator and judge use the same model, the experiment metadata records `judge_equals_generator`. This distinction should be mentioned when reporting the results.
+When the generator and judge use the same model, the experiment metadata records `judge_equals_generator`. This distinction should be mentioned when reporting the result.
 
 ### Caching and Resuming
 
